@@ -109,7 +109,12 @@ function applyConfig() {
 
   document.title = `${SITE.studioName} — Digital Wedding Invitation Samples`;
 
-  // services section CTA button
+  // hero CTA + services CTA both go to WhatsApp
+  const heroBtn = document.getElementById("hero-wa-btn");
+  if (heroBtn) {
+    heroBtn.href = waLink(SITE.whatsappNumber,
+      "Hi, I'd like to get a custom digital wedding invitation. Can you help?");
+  }
   const svcBtn = document.getElementById("services-wa-btn");
   if (svcBtn) {
     svcBtn.href = waLink(SITE.whatsappNumber,

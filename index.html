@@ -31,85 +31,55 @@
 </head>
 <body>
 
-  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <!-- ── Header / Hero ─────────────────────────────────────────────────── -->
   <header class="site-header">
-    <p class="studio-name" id="studio-name"></p>
-    <h1 class="headline" id="headline"></h1>
-    <p class="subline">Tap any sample to see it live.</p>
-    <div class="divider" aria-hidden="true"></div>
-  </header>
 
-  <!-- ── Services / Features strip ────────────────────────────────────────── -->
-  <section class="services-section" aria-label="What we offer">
-    <div class="services-inner">
+    <!-- top bar -->
+    <div class="hero-topbar">
+      <p class="studio-name" id="studio-name"></p>
+    </div>
 
-      <div class="services-headline">
-        <p class="services-tag">What you get</p>
-        <h2 class="services-title">Custom digital wedding invitations,<br>built around your story</h2>
-        <p class="services-sub">Share via WhatsApp, Instagram or any link. No app. No printing. Just magic.</p>
+    <!-- main hero content -->
+    <div class="hero-body">
+      <!-- decorative rings -->
+      <div class="hero-ring hero-ring-1" aria-hidden="true"></div>
+      <div class="hero-ring hero-ring-2" aria-hidden="true"></div>
+
+      <!-- gold ornament line -->
+      <div class="hero-ornament" aria-hidden="true">
+        <span></span><span class="hero-ornament-diamond"></span><span></span>
       </div>
 
-      <ul class="features-grid" role="list">
-        <li class="feature-card">
-          <span class="feature-icon">🎨</span>
-          <strong>Designed from your reference</strong>
-          <p>Send us any style you love — we build yours to match. Every card is made from scratch, not a template.</p>
-        </li>
-        <li class="feature-card">
-          <span class="feature-icon">⚡</span>
-          <strong>Delivered in 2 days</strong>
-          <p>Fast turnaround without cutting corners. You get a live link ready to share in 48 hours.</p>
-        </li>
-        <li class="feature-card">
-          <span class="feature-icon">📱</span>
-          <strong>100% mobile friendly</strong>
-          <p>Looks perfect on every phone — iPhone, Android, and inside Instagram &amp; WhatsApp in-app browsers.</p>
-        </li>
-        <li class="feature-card">
-          <span class="feature-icon">✅</span>
-          <strong>RSVP built in</strong>
-          <p>Guests confirm attendance with one tap. Responses land directly in your WhatsApp or Google Sheet.</p>
-        </li>
-        <li class="feature-card">
-          <span class="feature-icon">📍</span>
-          <strong>Venue map &amp; directions</strong>
-          <p>Embedded Google Maps so guests never get lost. One tap opens navigation on any phone.</p>
-        </li>
-        <li class="feature-card">
-          <span class="feature-icon">🎵</span>
-          <strong>Background music</strong>
-          <p>Your favourite song plays softly as guests open the invitation — sets the mood instantly.</p>
-        </li>
-        <li class="feature-card">
-          <span class="feature-icon">📸</span>
-          <strong>Photo &amp; video gallery</strong>
-          <p>Add your pre-wedding shoot photos or a highlight reel right inside the invitation.</p>
-        </li>
-        <li class="feature-card">
-          <span class="feature-icon">⏳</span>
-          <strong>Live countdown timer</strong>
-          <p>A real-time ticker counting down to the wedding day — keeps guests excited and on time.</p>
-        </li>
-        <li class="feature-card">
-          <span class="feature-icon">🔗</span>
-          <strong>One shareable link</strong>
-          <p>Share one URL everywhere — WhatsApp groups, Instagram bio, DMs, or print as a QR code.</p>
-        </li>
+      <h1 class="headline" id="headline"></h1>
+
+      <p class="subline">Beautiful digital invitations — delivered in 48 hours.</p>
+
+      <!-- feature pills -->
+      <ul class="hero-pills" role="list">
+        <li>🎨 Custom design</li>
+        <li>⚡ 48-hr delivery</li>
+        <li>✅ RSVP included</li>
+        <li>📍 Map &amp; directions</li>
+        <li>🎵 Music</li>
+        <li>📸 Photo gallery</li>
+        <li>⏳ Countdown</li>
+        <li>📱 Mobile perfect</li>
       </ul>
 
-      <div class="services-cta">
-        <a id="services-wa-btn" href="#" target="_blank" rel="noopener noreferrer" class="services-wa-btn">
-          💬 WhatsApp us to get started
-        </a>
-        <p class="services-note">Tell us your wedding date, share a reference design, and we'll handle the rest.</p>
-      </div>
-
+      <!-- CTA -->
+      <a id="hero-wa-btn" href="#" target="_blank" rel="noopener noreferrer" class="hero-cta-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true"><path d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12a11.93 11.93 0 0 0 1.64 6.07L0 24l6.11-1.6A11.97 11.97 0 0 0 12 24c6.63 0 12-5.37 12-12a11.93 11.93 0 0 0-3.48-8.52zM12 22a9.94 9.94 0 0 1-5.07-1.38l-.36-.22-3.73.98.99-3.63-.24-.37A9.94 9.94 0 0 1 2 12C2 6.48 6.48 2 12 2a9.93 9.93 0 0 1 7.07 2.93A9.93 9.93 0 0 1 22 12c0 5.52-4.48 10-10 10zm5.47-7.4c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.41-1.49-.89-.79-1.49-1.77-1.67-2.07-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.63-.93-2.24-.24-.58-.49-.5-.68-.51H7.5c-.18 0-.47.07-.72.35-.25.28-.94.92-.94 2.24 0 1.32.96 2.6 1.1 2.78.13.18 1.89 2.89 4.59 4.05.64.28 1.14.44 1.53.56.64.2 1.23.17 1.69.1.52-.08 1.77-.72 2.02-1.42.25-.7.25-1.29.18-1.42-.08-.13-.28-.2-.58-.35z"/></svg>
+        Get yours — WhatsApp us
+      </a>
+      <p class="hero-note">Share your reference. We deliver in 2 days.</p>
     </div>
-  </section>
 
+  </header>
+
+  <!-- ── Gallery heading ───────────────────────────────────────────────── -->
   <div class="gallery-heading">
     <h2 class="gallery-title">Browse our work</h2>
-    <p class="gallery-sub">Tap any card to preview it live inside the card, or open in full.</p>
+    <p class="gallery-sub">Tap any card to preview it live, or open in full.</p>
   </div>
 
   <!-- ── Main ───────────────────────────────────────────────────────────── -->
