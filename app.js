@@ -63,7 +63,7 @@ function render() {
     </div></div>
     <div class="meta">
       <div><div class="names">${s.bride} <span>&amp;</span> ${s.groom}</div><div class="cat">${s.cat}</div></div>
-      <div class="price">₹${s.price.toLocaleString("en-IN")}</div>
+      <!-- <div class="price">₹${s.price.toLocaleString("en-IN")}</div> -->
     </div>
     <a class="wa" target="_blank" rel="noopener" href="${wa(`Hi! I like the ${s.bride} & ${s.groom} (${s.cat}) invitation. I'd like something similar.`)}">💬 Order on WhatsApp</a>
   </article>`).join("") : `<div class="empty">No samples match. Try another category or name.</div>`;
