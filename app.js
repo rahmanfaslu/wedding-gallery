@@ -355,10 +355,383 @@ function observeCards() {
   document.querySelectorAll(".card-wrap:not(.visible)").forEach(el => revealObserver.observe(el));
 }
 
-// ── iPhone 16 viewport width used for all iframe renders ─────────────────────
-const IPHONE_W = 393; // iPhone 16 / 16 Pro logical width
+// ── iPhone viewport width for all iframe renders ─────────────────────────────
+const IPHONE_W = 390;
+const IPHONE_H = 780;
+const MAX_LIVE  = 3;           // max simultaneous in-card iframes
+
+// ── Modal setup ───────────────────────────────────────────────────────────────
+
+const modal      = document.getElementById("preview-modal");
+const modalFrame = document.getElementById("modal-frame");
+const modalUrl   = document.getElementById("modal-url");
+const modalOpen  = document.getElementById("modal-open-btn");
+const modalClose = document.getElementById("modal-close-btn");
+const modalBlocked = document.getElementById("modal-blocked");
+const modalBlockedLink = document.getElementById("modal-blocked-link");
+
+function openModal(url, title) {
+  // reset state
+  modalFrame.style.display = "block";
+  modalBlocked.classList.remove("show");
+
+  // populate bar
+  modalUrl.textContent = url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  modalOpen.href       = url;
+  modalBlockedLink.href = url;
+
+  // set iframe src NOW (lazy — created only on demand)
+  modalFrame.src = url;
+
+  // detect block after 7s
+  let loaded = false;
+  const blockTimer = setTimeout(() => {
+    if (!loaded) showModalBlocked();
+  }, 7000);
+
+  modalFrame.onload = () => {
+    loaded = true;
+    clearTimeout(blockTimer);
+    try {
+      const doc = modalFrame.contentDocument || modalFrame.contentWindow?.document;
+      if (!doc || !doc.body || doc.body.innerHTML.trim() === "") showModalBlocked();
+    } catch { /* cross-origin = fine */ }
+  };
+  modalFrame.onerror = () => { clearTimeout(blockTimer); showModalBlocked(); };
+
+  modal.showModal();
+}
+
+function showModalBlocked() {
+  modalFrame.style.display = "none";
+  modalBlocked.classList.add("show");
+}
+
+function closeModal() {
+  modal.close();
+  modalFrame.src = "about:blank"; // free memory + stop audio
+  modalBlocked.classList.remove("show");
+  modalFrame.style.display = "block";
+}
+
+modalClose.addEventListener("click", closeModal);
+
+// click backdrop to close
+modal.addEventListener("click", e => {
+  const rect = modal.getBoundingClientRect();
+  const outside = e.clientX < rect.left || e.clientX > rect.right ||
+                  e.clientY < rect.top  || e.clientY > rect.bottom;
+  if (outside) closeModal();
+});
+
+modal.addEventListener("close", () => {
+  // ensure cleanup even on Escape key
+  modalFrame.src = "about:blank";
+});
+
+// ── Visibility-based in-card iframe ──────────────────────────────────────────
+
+const liveCards = new Set(); // tracks which card thumbs currently have a live iframe
+
+const liveObserver = new IntersectionObserver((entries) => {
+  entries.forEach(({ target, isIntersecting }) => {
+    if (isIntersecting && liveCards.size < MAX_LIVE && !target.querySelector(".card-live")) {
+      injectLiveFrame(target);
+    } else if (!isIntersecting && target.querySelector(".card-live")) {
+      removeLiveFrame(target);
+    }
+  });
+}, { rootMargin: "100px", threshold: 0.5 });
+
+function injectLiveFrame(thumb) {
+  const url = thumb.dataset.url;
+  if (!url) return;
+
+  const wrap = document.createElement("div");
+  wrap.className = "card-live";
+
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("sandbox",    "allow-scripts allow-same-origin allow-forms allow-popups");
+  iframe.setAttribute("title",      "Invitation live preview");
+  iframe.setAttribute("aria-hidden","true");
+
+  // scale from 390px down to the card's actual width
+  function scale() {
+    const w = thumb.offsetWidth || 180;
+    const h = thumb.offsetHeight || 240;
+    const s = w / IPHONE_W;
+    iframe.style.width     = `${IPHONE_W}px`;
+    iframe.style.height    = `${Math.round(h / s)}px`;
+    iframe.style.transform = `scale(${s})`;
+  }
+
+  scale();
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(scale).observe(thumb);
+  }
+
+  iframe.src = url;
+  iframe.addEventListener("load", () => {
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (doc && doc.body && doc.body.innerHTML.trim() !== "") {
+        wrap.classList.add("ready"); // fade in
+      }
+      // if blank/blocked, wrap stays invisible — SVG shows through
+    } catch {
+      wrap.classList.add("ready"); // cross-origin = assume loaded fine
+    }
+  });
+
+  wrap.appendChild(iframe);
+  thumb.appendChild(wrap);
+  liveCards.add(thumb);
+}
+
+function removeLiveFrame(thumb) {
+  const live = thumb.querySelector(".card-live");
+  if (live) {
+    const f = live.querySelector("iframe");
+    if (f) f.src = "about:blank"; // stop audio/video
+    live.remove();
+  }
+  liveCards.delete(thumb);
+}
 
 // ── Build one card ────────────────────────────────────────────────────────────
+
+function buildCard(sample) {
+  const waText = `Hi, I like the ${sample.title} sample and want an invitation like it.`;
+  const hasUrl = !!sample.url;
+
+  const wrap = document.createElement("div");
+  wrap.className = "card-wrap";
+
+  // main link — opens modal if URL exists, else opens WhatsApp
+  const link = document.createElement("a");
+  link.className = "card-link";
+
+  if (hasUrl) {
+    // intercept click → open modal instead of navigating
+    link.href = sample.url;    // real href for right-click / accessibility
+    link.addEventListener("click", e => {
+      e.preventDefault();
+      openModal(sample.url, sample.title);
+    });
+  } else {
+    link.href   = waLink(SITE.whatsappNumber, `Hi, I'd like to see the ${sample.title} invitation.`);
+    link.target = "_blank";
+    link.rel    = "noopener noreferrer";
+  }
+  link.setAttribute("aria-label", `Preview ${sample.title} invitation`);
+
+  // thumb container — stores URL for the live observer
+  const thumb = document.createElement("div");
+  thumb.className = "card-thumb";
+  if (hasUrl) thumb.dataset.url = sample.url;
+
+  // SVG design (always behind everything)
+  const svgWrap = document.createElement("div");
+  svgWrap.className = "card-dummy";
+  svgWrap.setAttribute("aria-hidden", "true");
+  svgWrap.innerHTML = getDesign(sample.category, sample.title);
+  thumb.appendChild(svgWrap);
+
+  // New badge
+  if (isNew(sample.addedAt)) {
+    const badge = document.createElement("span");
+    badge.className   = "badge-new";
+    badge.textContent = "New";
+    thumb.appendChild(badge);
+  }
+
+  // real photo (covers SVG when loaded)
+  if (sample.image) {
+    const img     = document.createElement("img");
+    img.className = "card-img";
+    img.src       = sample.image;
+    img.alt       = `${sample.title} invitation thumbnail`;
+    img.loading   = "lazy";
+    img.onerror   = () => img.remove();
+    thumb.appendChild(img);
+  }
+
+  // "Preview" pill trigger — clicking opens the modal
+  if (hasUrl) {
+    const trigger = document.createElement("button");
+    trigger.type      = "button";
+    trigger.className = "card-preview-trigger";
+    trigger.setAttribute("aria-label", `Preview ${sample.title} in full screen`);
+    trigger.addEventListener("click", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openModal(sample.url, sample.title);
+    });
+
+    const pill = document.createElement("span");
+    pill.className = "card-preview-pill";
+    pill.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/></svg> Preview`;
+    trigger.appendChild(pill);
+    thumb.appendChild(trigger);
+  }
+
+  link.appendChild(thumb);
+
+  // card text
+  const body    = document.createElement("div");
+  body.className = "card-body";
+  const titleEl  = document.createElement("p");
+  titleEl.className   = "card-title";
+  titleEl.textContent = sample.title;
+  const catEl    = document.createElement("p");
+  catEl.className   = "card-cat";
+  catEl.textContent = sample.category;
+  body.appendChild(titleEl);
+  body.appendChild(catEl);
+  link.appendChild(body);
+
+  wrap.appendChild(link);
+
+  // WhatsApp sibling link
+  const wa  = document.createElement("a");
+  wa.className   = "card-wa";
+  wa.href        = waLink(SITE.whatsappNumber, waText);
+  wa.target      = "_blank";
+  wa.rel         = "noopener noreferrer";
+  wa.textContent = "I want this style";
+  wa.setAttribute("aria-label", `I want a style like ${sample.title} — open WhatsApp`);
+  wa.addEventListener("click", e => e.stopPropagation());
+  wrap.appendChild(wa);
+
+  return wrap;
+}
+
+// ── Scroll-reveal + live-frame observers ─────────────────────────────────────
+
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const siblings = [...entry.target.parentElement.querySelectorAll(".card-wrap")];
+    const idx = siblings.indexOf(entry.target);
+    entry.target.style.transitionDelay = `${(idx % 4) * 65}ms`;
+    entry.target.classList.add("visible");
+    revealObserver.unobserve(entry.target);
+  });
+}, { threshold: 0.07 });
+
+function observeCards() {
+  document.querySelectorAll(".card-wrap:not(.visible)").forEach(el => revealObserver.observe(el));
+  // register thumbs with live-frame observer
+  document.querySelectorAll(".card-thumb[data-url]").forEach(el => liveObserver.observe(el));
+}
+
+// ── Render grid ───────────────────────────────────────────────────────────────
+
+function renderGrid(samples) {
+  const grid  = document.getElementById("grid");
+  const empty = document.getElementById("empty-state");
+  const count = document.getElementById("result-count");
+
+  // stop and remove all live iframes before wiping the grid
+  document.querySelectorAll(".card-thumb[data-url]").forEach(el => {
+    liveObserver.unobserve(el);
+    removeLiveFrame(el);
+  });
+  liveCards.clear();
+
+  [...grid.children].forEach(c => { if (c !== empty) c.remove(); });
+
+  if (samples.length === 0) {
+    empty.style.display = "block";
+    count.textContent   = "0 samples";
+  } else {
+    empty.style.display = "none";
+    count.textContent   = samples.length === 1 ? "1 sample" : `${samples.length} samples`;
+    const frag = document.createDocumentFragment();
+    samples.forEach(s => frag.appendChild(buildCard(s)));
+    grid.insertBefore(frag, empty);
+    observeCards();
+  }
+}
+
+// ── URL state ─────────────────────────────────────────────────────────────────
+
+function readParams() {
+  const p = new URLSearchParams(window.location.search);
+  return { cat: p.get("cat") || "All", query: p.get("q") || "" };
+}
+
+function pushParams(cat, query) {
+  const p = new URLSearchParams();
+  if (cat && cat !== "All") p.set("cat", cat);
+  if (query) p.set("q", query);
+  const qs = p.toString();
+  history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+
+function filterSamples(samples, cat, query) {
+  const lq = query.toLowerCase();
+  return samples.filter(s => {
+    const matchCat = cat === "All" || s.category === cat;
+    const matchQ   = !lq || s.title.toLowerCase().includes(lq);
+    return matchCat && matchQ;
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+function init() {
+  applyConfig();
+
+  const sorted     = sortSamples(SAMPLES);
+  const categories = [...new Set(sorted.map(s => s.category))];
+
+  let { cat, query } = readParams();
+
+  const searchInput = document.getElementById("search-input");
+  const searchClear = document.getElementById("search-clear");
+
+  searchInput.value = query;
+  searchClear.classList.toggle("hidden", !query);
+
+  buildChips(categories, cat, onCatChange);
+  renderGrid(filterSamples(sorted, cat, query));
+
+  function onCatChange(newCat) {
+    cat = newCat;
+    pushParams(cat, query);
+    buildChips(categories, cat, onCatChange);
+    renderGrid(filterSamples(sorted, cat, query));
+  }
+
+  searchInput.addEventListener("input", () => {
+    query = searchInput.value;
+    searchClear.classList.toggle("hidden", !query);
+    pushParams(cat, query);
+    renderGrid(filterSamples(sorted, cat, query));
+  });
+
+  searchClear.addEventListener("click", () => {
+    query = "";
+    searchInput.value = "";
+    searchClear.classList.add("hidden");
+    pushParams(cat, query);
+    renderGrid(filterSamples(sorted, cat, query));
+    searchInput.focus();
+  });
+
+  window.addEventListener("popstate", () => {
+    ({ cat, query } = readParams());
+    searchInput.value = query;
+    searchClear.classList.toggle("hidden", !query);
+    buildChips(categories, cat, onCatChange);
+    renderGrid(filterSamples(sorted, cat, query));
+  });
+}
+
+init();
 
 function buildCard(sample) {
   const waText  = `Hi, I like the ${sample.title} sample and want an invitation like it.`;
