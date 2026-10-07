@@ -172,31 +172,6 @@
     </svg>
   </a>
 
-  <!-- ── Preview Modal (dialog) ────────────────────────────────────────── -->
-  <dialog id="preview-modal" aria-label="Invitation preview">
-    <div class="modal-bar">
-      <span class="modal-url" id="modal-url"></span>
-      <a class="modal-open-btn" id="modal-open-btn" href="#" target="_blank" rel="noopener noreferrer">Open ↗</a>
-      <button class="modal-close-btn" id="modal-close-btn" aria-label="Close preview">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
-    <div class="modal-frame-wrap">
-      <iframe id="modal-frame"
-        loading="lazy"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-        title="Invitation preview"
-        aria-hidden="true"
-      ></iframe>
-      <div class="modal-blocked" id="modal-blocked">
-        <p>This site can't be previewed due to security settings.</p>
-        <a id="modal-blocked-link" href="#" target="_blank" rel="noopener noreferrer">Open invitation ↗</a>
-      </div>
-    </div>
-  </dialog>
-
   <!-- Scripts — config first, then app -->
   <script src="config.js"></script>
   <script src="app.js"></script>
